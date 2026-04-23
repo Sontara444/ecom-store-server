@@ -8,17 +8,40 @@ const getProducts = catchAsync(async (req, res) => {
   const pageSize = 12;
   const page = Number(req.query.pageNumber) || 1;
 
-  const keyword = req.query.keyword
-    ? {
-        title: {
-          $regex: req.query.keyword,
-          $options: 'i',
-        },
-      }
-    : {};
+  // Build filter query
+  const query = {};
 
-  const count = await Product.countDocuments({ ...keyword });
-  const products = await Product.find({ ...keyword })
+  if (req.query.keyword) {
+    query.title = {
+      $regex: req.query.keyword,
+      $options: 'i',
+    };
+  }
+
+  if (req.query.category && req.query.category !== 'All') {
+    query.category = req.query.category;
+  }
+
+  if (req.query.minPrice || req.query.maxPrice) {
+    query.price = {};
+    if (req.query.minPrice) query.price.$gte = Number(req.query.minPrice);
+    if (req.query.maxPrice) query.price.$lte = Number(req.query.maxPrice);
+  }
+
+  if (req.query.rating) {
+    query.rating = { $gte: Number(req.query.rating) };
+  }
+
+  // Handle sorting
+  let sort = {};
+  if (req.query.sort === 'price-low') sort = { price: 1 };
+  else if (req.query.sort === 'price-high') sort = { price: -1 };
+  else if (req.query.sort === 'rating') sort = { rating: -1 };
+  else sort = { createdAt: -1 }; // Default: Newest
+
+  const count = await Product.countDocuments(query);
+  const products = await Product.find(query)
+    .sort(sort)
     .limit(pageSize)
     .skip(pageSize * (page - 1));
 
