@@ -1,14 +1,16 @@
 const express = require('express');
 const dotenv = require('dotenv');
+const path = require('path');
+
+// Load environment variables FIRST before any other imports
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
 const cors = require('cors');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const orderRoutes = require('./routes/orderRoutes');
-
-// Load environment variables
-dotenv.config();
 
 // Connect to Database
 connectDB();
